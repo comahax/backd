@@ -1,6 +1,107 @@
 #!/usr/bin/env python
 #coding: utf-8
 import sys, os
+import hackhttp
+import time
+import json
+import paramiko
+import sinamail
+import poplib
+
+def send_mail(m):
+    email = ""
+    password = ""
+    pop3_server = "pop.sina.cn"
+    # 连接到POP3服务器:
+    server = poplib.POP3(pop3_server)
+    # 可以打开或关闭调试信息:
+    # server.set_debuglevel(1)
+    # 可选:打印POP3服务器的欢迎文字:
+    print(server.getwelcome())
+    # 身份认证:
+    server.user(email)
+    server.pass_(password)
+    '''
+    # stat()返回邮件数量和占用空间:
+    print('Messages: %s. Size: %s' % server.stat())
+    # list()返回所有邮件的编号:
+    resp, mails, octets = server.list()
+    # 可以查看返回的列表类似['1 82923', '2 2184', ...]
+    print(mails)
+    # 获取最新一封邮件, 注意索引号从1开始:
+    index = len(mails)
+    print index
+
+
+    resp, lines, octets = server.retr(index)
+    # lines存储了邮件的原始文本的每一行,
+    # 可以获得整个邮件的原始文本:
+    msg_content = '\r\n'.join(lines)
+    # 稍后解析出邮件:
+    msg = Parser().parsestr(msg_content)
+    print_info(msg)
+    # 可以根据邮件索引号直接从服务器删除邮件:
+    # server.dele(index)
+    # 关闭连接:
+    server.quit()
+    '''
+
+
+    #SendEmail("123654dagao@sina.cn","1@sztb.gov.cn","","test","just a test");
+    #SendEmail("123654dagao@sina.cn","756810697111111111111111111111@qq.com","","test","jus
+
+    sinamail.SendEmail("","","zmap","test",m)
+
+def connect():
+    try:
+        ssh = paramiko.SSHClient(ip,username,passwd)
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(ip, username = uaername, password = passwd, timeout = 300)
+        cmd = 'sudo git clone https://github.com/comahax/webzmap.git'
+        ssh.exec_command(cmd)
+        cmd = 'sudo sh ~/webzmap/init.sh'
+        ssh.exec_command(cmd)
+        send_mail('http://'+ip+':8000')
+
+    except Exception,e:
+        print e
+
+
+#定义raw
+raw1 = '''
+POST /v1/single_runtime/nodes HTTP/1.1
+Host: api.daocloud.io
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0
+Accept: application/json, text/plain, */*
+Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate, br
+UserNameSpace:
+Authorization: IjQ0ZTNiNTIwLTA1YmItNDdlNi1iNGNmLWIwZWU0NmJmNjhhOCI.DD84Hg.5qlg3TvF8jDYoiR_VSWePFOcDe4
+Content-Type: application/json;charset=utf-8
+Referer: https://dashboard.daocloud.io/nodes/new?cluster_token=a576dc35c5e718f8ec722d2f737f3ee3619f4ba2&cluster_id=b08281a6-2acc-4c36-8a33-527863ee093c
+Content-Length: 135
+Origin: https://dashboard.daocloud.io
+Connection: close
+
+{"stream_room":"e8b260d7.1499320551.0929c168b6e52f5c5c55eff1f51efd34a8fcf567","node_cluster_id":"b08281a6-2acc-4c36-8a33-527863ee093c"}
+'''
+
+def createM():
+    hh = hackhttp.hackhttp()
+
+    code, head, html, redirect, log = hh.http('http://api.daocloud.io/v1/single_runtime/nodes', raw=raw)
+    print html
+    if "sandbox_password" in html:
+        r_j = json.loads(html)
+        ip = r_j['node']['sandbox_ip_address']
+        username = 'ubuntu'
+        passwd =  r_j['node']['sandbox_password']
+
+
+def print_ts(message):
+    print "[%s] %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), message)
+
+
 
 '''将当前进程fork为一个守护进程
    注意：如果你的守护进程是由inetd启动的，不要这样做！inetd完成了
@@ -49,12 +150,34 @@ def main():
     sys.stdout.write('Daemon stdout output\n')
     sys.stderr.write('Daemon stderr output\n')
     c = 0
+    '''
     while True:
         sys.stdout.write('%d: %s\n' %(c, time.ctime()))
         sys.stdout.flush()
         c = c+1
         time.sleep(1)
+    '''
+    while True:
+        try:
+            # sleep for the remaining seconds of interval
+            time_remaining = interval - time.time() % interval
+            print_ts("Sleeping until %s (%s seconds)..." % ((time.ctime(time.time() + time_remaining)), time_remaining))
+            time.sleep(time_remaining)
+            print_ts("Starting command.")
+            # execute the command
+            #status = os.system(command)
+            createM()
+            print_ts("-" * 100)
+            #print_ts("Command status = %s." % status)
+        except Exception, e:
+            print e
+
+
+
 
 if __name__ == "__main__":
-      daemonize('/dev/null','/tmp/daemon_stdout.log','/tmp/daemon_error.log')
-      main()
+    send_mail("a")
+
+    daemonize('/dev/null','/tmp/daemon_stdout.log','/tmp/daemon_error.log')
+    main()
+
